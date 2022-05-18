@@ -1,5 +1,5 @@
 package com.rafaelboban.data.responses
 
-data class AuthResponse(
+data class TokenResponse(
     val token: String
 )

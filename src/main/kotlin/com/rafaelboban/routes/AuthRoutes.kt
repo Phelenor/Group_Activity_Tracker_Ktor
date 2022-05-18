@@ -3,8 +3,9 @@ package com.rafaelboban.routes
 import com.rafaelboban.data.models.User
 import com.rafaelboban.data.requests.LoginRequest
 import com.rafaelboban.data.requests.RegisterRequest
-import com.rafaelboban.data.responses.AuthResponse
+import com.rafaelboban.data.responses.TokenResponse
 import com.rafaelboban.data.responses.SimpleResponse
+import com.rafaelboban.data.responses.UserResponse
 import com.rafaelboban.data.users.UserDataSource
 import com.rafaelboban.security.hashing.SHA256HashingService
 import com.rafaelboban.security.hashing.SaltedHash
@@ -97,14 +98,20 @@ fun Route.login(tokenConfig: TokenConfig) {
             )
         )
 
-        call.respond(HttpStatusCode.OK, AuthResponse(token))
+        call.respond(HttpStatusCode.OK, TokenResponse(token))
     }
 }
 
 fun Route.authenticate() {
     authenticate {
         get("/authenticate") {
-            call.respond(HttpStatusCode.OK)
+            val principal = call.principal<JWTPrincipal>() ?: return@get
+            val userId = principal.getClaim("userId", String::class) ?: return@get
+            val username = principal.getClaim("username", String::class) ?: return@get
+            val email = principal.getClaim("email", String::class) ?: return@get
+
+            val response = UserResponse(userId, username, email)
+            call.respond(HttpStatusCode.OK, response)
         }
     }
 }
