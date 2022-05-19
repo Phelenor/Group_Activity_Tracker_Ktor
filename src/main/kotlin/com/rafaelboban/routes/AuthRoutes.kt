@@ -1,12 +1,12 @@
 package com.rafaelboban.routes
 
-import com.rafaelboban.data.models.User
+import com.rafaelboban.data.user.User
 import com.rafaelboban.data.requests.LoginRequest
 import com.rafaelboban.data.requests.RegisterRequest
 import com.rafaelboban.data.responses.TokenResponse
 import com.rafaelboban.data.responses.SimpleResponse
 import com.rafaelboban.data.responses.UserResponse
-import com.rafaelboban.data.users.UserDataSource
+import com.rafaelboban.data.user.UserDataSource
 import com.rafaelboban.security.hashing.SHA256HashingService
 import com.rafaelboban.security.hashing.SaltedHash
 import com.rafaelboban.security.token.JwtTokenService
@@ -112,17 +112,6 @@ fun Route.authenticate() {
 
             val response = UserResponse(userId, username, email)
             call.respond(HttpStatusCode.OK, response)
-        }
-    }
-}
-
-fun Route.getUserInfo() {
-    authenticate {
-        get("/info") {
-            val principal = call.principal<JWTPrincipal>()
-            val userId = principal?.getClaim("userId", String::class)
-            val username = principal?.getClaim("username", String::class)
-            call.respond(HttpStatusCode.OK, "Your userId is $userId and username is $username.")
         }
     }
 }

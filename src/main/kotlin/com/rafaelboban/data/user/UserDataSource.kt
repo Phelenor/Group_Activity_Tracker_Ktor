@@ -1,14 +1,11 @@
-package com.rafaelboban.data.users
+package com.rafaelboban.data.user
 
 import com.rafaelboban.data.Database
-import com.rafaelboban.data.models.User
 import org.litote.kmongo.eq
 
 object UserDataSource {
 
-    private val db = Database.database
-
-    private val users = db.getCollection<User>()
+    private val users = Database.database.getCollection<User>()
 
     suspend fun getUserByEmail(email: String): User? {
         return users.findOne(User::email eq email)
