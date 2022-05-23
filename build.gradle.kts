@@ -44,6 +44,7 @@ dependencies {
     implementation("org.litote.kmongo:kmongo-coroutine:$kmongo_version")
 
     implementation("commons-codec:commons-codec:$commons_codec_version")
+    implementation("com.password4j:password4j:1.5.4")
 
     sshAntTask("org.apache.ant:ant-jsch:1.10.12")
 }

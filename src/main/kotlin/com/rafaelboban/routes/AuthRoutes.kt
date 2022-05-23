@@ -7,8 +7,7 @@ import com.rafaelboban.data.responses.TokenResponse
 import com.rafaelboban.data.responses.SimpleResponse
 import com.rafaelboban.data.responses.UserResponse
 import com.rafaelboban.data.user.UserDataSource
-import com.rafaelboban.security.hashing.SHA256HashingService
-import com.rafaelboban.security.hashing.SaltedHash
+import com.rafaelboban.security.hashing.HashingService
 import com.rafaelboban.security.token.JwtTokenService
 import com.rafaelboban.security.token.TokenClaim
 import com.rafaelboban.security.token.TokenConfig
@@ -39,12 +38,11 @@ fun Route.register() {
             return@post
         }
 
-        val saltedHash = SHA256HashingService.generateSaltedHash(request.password)
+        val passwordHash = HashingService.generateHash(request.password)
         val user = User(
             username = request.username,
             email = request.email,
-            password = saltedHash.hash,
-            salt = saltedHash.salt
+            password = passwordHash
         )
 
         val wasAcknowledged = UserDataSource.insertUser(user)
@@ -69,12 +67,9 @@ fun Route.login(tokenConfig: TokenConfig) {
             return@post
         }
 
-        val isPasswordCorrect = SHA256HashingService.verify(
-            value = request.password,
-            saltedHash = SaltedHash(
-                hash = user.password,
-                salt = user.salt
-            )
+        val isPasswordCorrect = HashingService.verifyPassword(
+            password = request.password,
+            hash = user.password
         )
 
         if (isPasswordCorrect.not()) {
@@ -86,7 +81,7 @@ fun Route.login(tokenConfig: TokenConfig) {
             config = tokenConfig,
             TokenClaim(
                 name = "userId",
-                value = user.id.toString()
+                value = user.id
             ),
             TokenClaim(
                 name = "username",
