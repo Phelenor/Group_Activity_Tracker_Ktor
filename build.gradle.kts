@@ -2,6 +2,7 @@ val ktor_version: String by project
 val kotlin_version: String by project
 val logback_version: String by project
 val kmongo_version: String by project
+val koin_version: String by project
 val commons_codec_version: String by project
 
 plugins {
@@ -43,8 +44,12 @@ dependencies {
     implementation("org.litote.kmongo:kmongo:$kmongo_version")
     implementation("org.litote.kmongo:kmongo-coroutine:$kmongo_version")
 
-    implementation("commons-codec:commons-codec:$commons_codec_version")
+    implementation("io.insert-koin:koin-ktor:$koin_version")
+
+    // KDFs for safe password storage
     implementation("com.password4j:password4j:1.5.4")
+
+    implementation("commons-codec:commons-codec:$commons_codec_version")
 
     sshAntTask("org.apache.ant:ant-jsch:1.10.12")
 }

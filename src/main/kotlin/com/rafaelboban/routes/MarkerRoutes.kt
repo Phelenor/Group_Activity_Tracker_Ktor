@@ -16,7 +16,7 @@ import io.ktor.server.routing.*
 fun Route.createMarker() {
 
     authenticate {
-        post("/create-marker") {
+        post("/api/create-marker") {
             val request = call.receiveOrNull<MarkerRequest>() ?: kotlin.run {
                 call.respond(HttpStatusCode.BadRequest)
                 return@post
@@ -47,7 +47,7 @@ fun Route.createMarker() {
 fun Route.deleteMarker() {
 
     authenticate {
-        post("/delete-marker") {
+        post("/api/delete-marker") {
             val request = call.receiveOrNull<DeleteMarkerRequest>() ?: kotlin.run {
                 call.respond(HttpStatusCode.BadRequest)
                 return@post
@@ -67,7 +67,7 @@ fun Route.deleteMarker() {
 fun Route.getMarkers() {
 
     authenticate {
-        get("/markers") {
+        get("/api/markers") {
             val userId = call.principal<JWTPrincipal>()?.getClaim("userId", String::class) ?: run {
                 call.respond(HttpStatusCode.Unauthorized)
                 return@get

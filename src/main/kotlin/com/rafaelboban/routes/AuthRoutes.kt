@@ -7,6 +7,7 @@ import com.rafaelboban.data.responses.TokenResponse
 import com.rafaelboban.data.responses.SimpleResponse
 import com.rafaelboban.data.responses.UserResponse
 import com.rafaelboban.data.user.UserDataSource
+import com.rafaelboban.plugins.TrackingSession
 import com.rafaelboban.security.hashing.HashingService
 import com.rafaelboban.security.token.JwtTokenService
 import com.rafaelboban.security.token.TokenClaim
@@ -18,9 +19,11 @@ import io.ktor.server.auth.jwt.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import io.ktor.server.sessions.*
+import io.ktor.util.*
 
 fun Route.register() {
-    post("/register") {
+    post("/api/register") {
         val request = call.receiveOrNull<RegisterRequest>() ?: kotlin.run {
             call.respond(HttpStatusCode.BadRequest)
             return@post
@@ -56,7 +59,7 @@ fun Route.register() {
 }
 
 fun Route.login(tokenConfig: TokenConfig) {
-    post("/login") {
+    post("/api/login") {
         val request = call.receiveOrNull<LoginRequest>() ?: run {
             call.respond(HttpStatusCode.BadRequest)
             return@post
@@ -99,11 +102,15 @@ fun Route.login(tokenConfig: TokenConfig) {
 
 fun Route.authenticate() {
     authenticate {
-        get("/authenticate") {
+        get("/api/authenticate") {
             val principal = call.principal<JWTPrincipal>() ?: return@get
             val userId = principal.getClaim("userId", String::class) ?: return@get
             val username = principal.getClaim("username", String::class) ?: return@get
             val email = principal.getClaim("email", String::class) ?: return@get
+
+            if (call.sessions.get<TrackingSession>() == null) {
+                call.sessions.set(TrackingSession(userId, generateNonce()))
+            }
 
             val response = UserResponse(userId, username, email)
             call.respond(HttpStatusCode.OK, response)

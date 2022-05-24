@@ -2,6 +2,16 @@ package com.rafaelboban.utils
 
 object Constants {
 
+    const val SESSION_NAME = "TRACKING_SESSION"
+
     const val DATABASE_NAME = "TrackerDatabase"
     const val THIRTY_DAYS_MILIS = 30L * 24L * 60L * 60L * 1000L
+
+    const val TYPE_CHAT_MESSAGE = "TYPE_CHAT_MESSAGE"
+    const val TYPE_LOCATION_DATA = "TYPE_LOCATION_DATA"
+    const val TYPE_ANNOUNCEMENT = "TYPE_ANNOUNCEMENT"
+    const val TYPE_JOIN_HANDSHAKE = "TYPE_JOIN_HANDSHAKE"
+    const val TYPE_PHASE_CHANGE = "TYPE_PHASE_CHANGE"
+    const val TYPE_PARTICIPANT_LIST = "TYPE_PARTICIPANT_LIST"
+    const val TYPE_DISCONNECT_REQUEST = "TYPE_DISCONNECT_REQUEST"
 }

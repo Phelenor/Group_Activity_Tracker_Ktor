@@ -1,11 +1,13 @@
 package com.rafaelboban.data.user
 
-import com.rafaelboban.data.Database
+import org.koin.java.KoinJavaComponent
+import org.litote.kmongo.coroutine.CoroutineDatabase
 import org.litote.kmongo.eq
 
 object UserDataSource {
 
-    private val users = Database.database.getCollection<User>()
+    private val database: CoroutineDatabase by KoinJavaComponent.inject(CoroutineDatabase::class.java)
+    private val users = database.getCollection<User>()
 
     suspend fun getUserByEmail(email: String): User? {
         return users.findOne(User::email eq email)
