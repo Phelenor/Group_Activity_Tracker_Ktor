@@ -4,10 +4,9 @@ import org.koin.java.KoinJavaComponent
 import org.litote.kmongo.coroutine.CoroutineDatabase
 import org.litote.kmongo.eq
 
-object MarkerDataSource {
+class MarkerDataSource(db: CoroutineDatabase) {
 
-    private val database: CoroutineDatabase by KoinJavaComponent.inject(CoroutineDatabase::class.java)
-    private val markers = database.getCollection<Marker>()
+    private val markers = db.getCollection<Marker>()
 
     suspend fun getMarkersByUserId(userId: String): List<Marker> {
         return markers.find(Marker::userId eq userId).toList()

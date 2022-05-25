@@ -1,18 +1,18 @@
 package com.rafaelboban
 
-import com.rafaelboban.di.databaseModule
-import com.rafaelboban.di.gsonModule
-import io.ktor.server.application.*
+import com.rafaelboban.di.mainModule
 import com.rafaelboban.plugins.*
 import com.rafaelboban.security.token.TokenConfig
 import com.rafaelboban.utils.Constants.THIRTY_DAYS_MILIS
+import io.ktor.server.application.*
 import io.ktor.server.application.ApplicationCallPipeline.ApplicationPhase.Plugins
+import io.ktor.server.netty.*
 import io.ktor.server.sessions.*
 import io.ktor.util.*
 import org.koin.core.context.startKoin
 
 fun main(args: Array<String>): Unit =
-    io.ktor.server.netty.EngineMain.main(args)
+    EngineMain.main(args)
 
 @Suppress("unused") // application.conf references the main function. This annotation prevents the IDE from marking it as unused.
 fun Application.module() {
@@ -24,7 +24,7 @@ fun Application.module() {
         secret = System.getenv("JWT_SECRET")
     )
 
-    startKoin { modules(databaseModule, gsonModule) }
+    startKoin { modules(mainModule) }
 
     configureSessions()
     configureSockets()

@@ -23,20 +23,20 @@ import io.ktor.server.routing.*
 import io.ktor.server.sessions.*
 import io.ktor.util.*
 
-fun Route.register() {
+fun Route.register(userDataSource: UserDataSource) {
     post("/api/register") {
         val request = call.receiveOrNull<RegisterRequest>() ?: kotlin.run {
             call.respond(HttpStatusCode.BadRequest)
             return@post
         }
 
-        val usernameTaken = UserDataSource.getUserByUsername(request.username) != null
+        val usernameTaken = userDataSource.getUserByUsername(request.username) != null
         if (usernameTaken) {
             call.respond(HttpStatusCode.OK, SimpleResponse(false, "Username taken."))
             return@post
         }
 
-        val emailTaken = UserDataSource.getUserByEmail(request.email) != null
+        val emailTaken = userDataSource.getUserByEmail(request.email) != null
         if (emailTaken) {
             call.respond(HttpStatusCode.OK, SimpleResponse(false, "Email taken."))
             return@post
@@ -49,7 +49,7 @@ fun Route.register() {
             password = passwordHash
         )
 
-        val wasAcknowledged = UserDataSource.insertUser(user)
+        val wasAcknowledged = userDataSource.insertUser(user)
         if (!wasAcknowledged) {
             call.respond(HttpStatusCode.InternalServerError)
             return@post
@@ -59,14 +59,14 @@ fun Route.register() {
     }
 }
 
-fun Route.login(tokenConfig: TokenConfig) {
+fun Route.login(userDataSource: UserDataSource, tokenConfig: TokenConfig) {
     post("/api/login") {
         val request = call.receiveOrNull<LoginRequest>() ?: run {
             call.respond(HttpStatusCode.BadRequest)
             return@post
         }
 
-        val user = UserDataSource.getUserByEmail(request.email) ?: run {
+        val user = userDataSource.getUserByEmail(request.email) ?: run {
             call.respond(HttpStatusCode.Conflict, "Incorrect email or password.")
             return@post
         }

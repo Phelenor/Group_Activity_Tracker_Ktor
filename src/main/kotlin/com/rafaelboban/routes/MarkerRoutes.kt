@@ -15,7 +15,7 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.sessions.*
 
-fun Route.createMarker() {
+fun Route.createMarker(markerDataSource: MarkerDataSource) {
 
     authenticate {
         post("/api/create-marker") {
@@ -35,7 +35,7 @@ fun Route.createMarker() {
                 Marker(request.title, request.snippet, request.latitude, request.longitude, userId)
             }
 
-            val wasAcknowledged = MarkerDataSource.insertMarker(marker)
+            val wasAcknowledged = markerDataSource.insertMarker(marker)
             if (!wasAcknowledged) {
                 call.respond(HttpStatusCode.InternalServerError)
                 return@post
@@ -46,7 +46,7 @@ fun Route.createMarker() {
     }
 }
 
-fun Route.deleteMarker() {
+fun Route.deleteMarker(markerDataSource: MarkerDataSource) {
 
     authenticate {
         post("/api/delete-marker") {
@@ -55,7 +55,7 @@ fun Route.deleteMarker() {
                 return@post
             }
 
-            val wasAcknowledged = MarkerDataSource.removeMarker(request.id)
+            val wasAcknowledged = markerDataSource.removeMarker(request.id)
             if (!wasAcknowledged) {
                 call.respond(HttpStatusCode.Conflict)
                 return@post
@@ -66,7 +66,7 @@ fun Route.deleteMarker() {
     }
 }
 
-fun Route.getMarkers() {
+fun Route.getMarkers(markerDataSource: MarkerDataSource) {
 
     authenticate {
         get("/api/markers") {
@@ -75,7 +75,7 @@ fun Route.getMarkers() {
                 return@get
             }
 
-            val markers = MarkerDataSource.getMarkersByUserId(userId)
+            val markers = markerDataSource.getMarkersByUserId(userId)
             call.respond(HttpStatusCode.OK, markers)
         }
     }

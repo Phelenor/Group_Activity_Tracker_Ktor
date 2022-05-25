@@ -5,6 +5,9 @@ import com.google.gson.JsonParser
 import com.rafaelboban.EventServer
 import com.rafaelboban.data.event.*
 import com.rafaelboban.data.event.ws.*
+import com.rafaelboban.data.event.ws.ChatMessage
+import com.rafaelboban.data.location.LocationDataSource
+import com.rafaelboban.data.message.MessageDataSource
 import com.rafaelboban.plugins.TrackingSession
 import com.rafaelboban.utils.Constants.TYPE_ANNOUNCEMENT
 import com.rafaelboban.utils.Constants.TYPE_CHAT_MESSAGE
@@ -19,7 +22,7 @@ import io.ktor.websocket.*
 import kotlinx.coroutines.channels.consumeEach
 import org.koin.ktor.ext.inject
 
-fun Route.eventWebSocket() {
+fun Route.eventWebSocket(locationDataSource: LocationDataSource, messageDataSource: MessageDataSource) {
     standardWebSocket("/ws/event") { socket, userId, message, payload ->
         when (payload) {
             is JoinEventHandshake -> {
