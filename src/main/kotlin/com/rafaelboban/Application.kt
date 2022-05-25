@@ -6,6 +6,9 @@ import io.ktor.server.application.*
 import com.rafaelboban.plugins.*
 import com.rafaelboban.security.token.TokenConfig
 import com.rafaelboban.utils.Constants.THIRTY_DAYS_MILIS
+import io.ktor.server.application.ApplicationCallPipeline.ApplicationPhase.Plugins
+import io.ktor.server.sessions.*
+import io.ktor.util.*
 import org.koin.core.context.startKoin
 
 fun main(args: Array<String>): Unit =
@@ -30,4 +33,11 @@ fun Application.module() {
     configureHTTP()
     configureMonitoring()
     configureSerialization()
+
+    intercept(Plugins) {
+        if (call.sessions.get<TrackingSession>() == null) {
+            val userId = call.parameters["user_id"] ?: return@intercept
+            call.sessions.set(TrackingSession(userId, generateNonce()))
+        }
+    }
 }

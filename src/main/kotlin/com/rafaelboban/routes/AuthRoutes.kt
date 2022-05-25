@@ -12,6 +12,7 @@ import com.rafaelboban.security.hashing.HashingService
 import com.rafaelboban.security.token.JwtTokenService
 import com.rafaelboban.security.token.TokenClaim
 import com.rafaelboban.security.token.TokenConfig
+import com.rafaelboban.utils.Constants
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
