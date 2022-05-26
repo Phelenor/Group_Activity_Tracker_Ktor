@@ -6,9 +6,8 @@ import com.rafaelboban.data.message.MessageDataSource
 import com.rafaelboban.data.user.UserDataSource
 import com.rafaelboban.routes.*
 import com.rafaelboban.security.token.TokenConfig
-import io.ktor.server.routing.*
 import io.ktor.server.application.*
-import org.koin.java.KoinJavaComponent.inject
+import io.ktor.server.routing.*
 import org.koin.ktor.ext.inject
 
 fun Application.configureRouting(tokenConfig: TokenConfig) {
@@ -26,6 +25,7 @@ fun Application.configureRouting(tokenConfig: TokenConfig) {
         createEvent()
         joinEvent()
         eventWebSocket(locationDataSource, messageDataSource)
+        getMessages(messageDataSource)
         authenticate()
     }
 }

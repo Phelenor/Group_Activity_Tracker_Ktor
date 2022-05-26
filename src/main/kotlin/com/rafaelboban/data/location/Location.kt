@@ -5,6 +5,7 @@ import org.bson.types.ObjectId
 
 data class Location(
     val userId: String,
+    val eventId: String,
     val timestamp: Long,
     val latitude: Double,
     val longitude: Double,

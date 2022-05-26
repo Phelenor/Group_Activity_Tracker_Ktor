@@ -4,7 +4,6 @@ import com.google.gson.Gson
 import com.rafaelboban.EventServer
 import com.rafaelboban.data.event.ws.Announcement
 import com.rafaelboban.data.event.ws.ParticipantList
-import com.rafaelboban.data.event.ws.PhaseChange
 import io.ktor.websocket.*
 import kotlinx.coroutines.*
 import org.koin.java.KoinJavaComponent.inject
@@ -34,7 +33,7 @@ class Event(val name: String, private val ownerId: String) {
     private var phaseChangedListener: ((Phase) -> Unit)? = { newPhase ->
         when (newPhase) {
             Phase.IN_PROGRESS -> eventInProgress()
-            Phase.FINISHED -> finish()
+            Phase.FINISHED -> finishActivity()
             else -> Unit
         }
     }
@@ -52,6 +51,7 @@ class Event(val name: String, private val ownerId: String) {
         lastUpdateTimestamp = System.currentTimeMillis()
         participants.forEach { participant ->
             if (participant.id != exceptParticipantId && participant.socket.isActive) {
+                println("broadcast message -> ${participant.username}")
                 participant.socket.send(Frame.Text(message))
             }
         }
@@ -102,8 +102,12 @@ class Event(val name: String, private val ownerId: String) {
         }
     }
 
-    fun finish() {
+    fun finishActivity() {
         broadcastStatusJob?.cancel()
+    }
+
+    fun killEvent() {
+
     }
 
     enum class Phase {

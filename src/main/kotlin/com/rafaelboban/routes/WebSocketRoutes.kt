@@ -6,7 +6,9 @@ import com.rafaelboban.EventServer
 import com.rafaelboban.data.event.*
 import com.rafaelboban.data.event.ws.*
 import com.rafaelboban.data.event.ws.ChatMessage
+import com.rafaelboban.data.location.Location
 import com.rafaelboban.data.location.LocationDataSource
+import com.rafaelboban.data.message.Message
 import com.rafaelboban.data.message.MessageDataSource
 import com.rafaelboban.plugins.TrackingSession
 import com.rafaelboban.utils.Constants.TYPE_ANNOUNCEMENT
@@ -26,8 +28,10 @@ fun Route.eventWebSocket(locationDataSource: LocationDataSource, messageDataSour
     standardWebSocket("/ws/event") { socket, userId, message, payload ->
         when (payload) {
             is JoinEventHandshake -> {
+                println("HANDSHAKE ATTEMPT")
                 val event = EventServer.events[payload.eventId] ?: throw IllegalArgumentException()
                 if (event.containsParticipant(payload.userId).not()) {
+                    println("HANDSHAKE SUCCESS")
                     event.addParticipant(payload.userId, payload.username, socket)
                 }
             }
@@ -36,14 +40,24 @@ fun Route.eventWebSocket(locationDataSource: LocationDataSource, messageDataSour
                 if (event.phase == Event.Phase.IN_PROGRESS) {
                     event.broadcastToAllExcept(message, userId)
                 }
+                locationDataSource.insertLocation(
+                    Location(
+                        userId,
+                        payload.eventId,
+                        payload.timestamp,
+                        payload.latitude,
+                        payload.longitude
+                    )
+                )
             }
             is ChatMessage -> {
                 val event = EventServer.events[payload.eventId] ?: return@standardWebSocket
-                // Maybe show it directly - TODO
                 event.broadcast(message)
+                messageDataSource.insertMessage(Message(userId, payload.timestamp, payload.message))
             }
             is PhaseChange -> {
                 val event = EventServer.events[payload.eventId] ?: return@standardWebSocket
+                println("PHASE CHANGE: ${payload.phase}")
                 event.phase = payload.phase
                 event.broadcastToAllExcept(message, userId)
             }
