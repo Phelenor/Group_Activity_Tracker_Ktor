@@ -1,12 +1,12 @@
 package com.rafaelboban
 
-import com.rafaelboban.data.event.Event
+import com.rafaelboban.data.event.EventController
 import kotlinx.coroutines.*
 import java.util.concurrent.ConcurrentHashMap
 
 object EventServer {
 
-    val events = ConcurrentHashMap<String, Event>()
+    val events = ConcurrentHashMap<String, EventController>()
 
     private val eventsToRemove = mutableListOf<String>()
 

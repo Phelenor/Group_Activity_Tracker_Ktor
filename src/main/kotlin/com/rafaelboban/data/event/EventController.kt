@@ -9,14 +9,14 @@ import kotlinx.coroutines.*
 import org.koin.java.KoinJavaComponent.inject
 import java.util.UUID
 
-class Event(val name: String, private val ownerId: String) {
+class EventController(val name: String, private val ownerId: String) {
 
     private val gson: Gson by inject(Gson::class.java)
 
     val id: String = UUID.randomUUID().toString()
     var participants: List<Participant> = emptyList()
     private var lastUpdateTimestamp: Long = Long.MIN_VALUE
-    val joinCode: String = List(8) { (('A'..'Z') + ('0'..'9')).random() }.joinToString("")
+    val joinCode: String = List(6) { (('A'..'Z') + ('0'..'9')).random() }.joinToString("")
 
     private var broadcastStatusJob: Job? = null
 

@@ -38,7 +38,7 @@ fun Route.eventWebSocket(locationDataSource: LocationDataSource) {
             }
             is LocationData -> {
                 val event = EventServer.events[payload.eventId] ?: return@standardWebSocket
-                if (event.phase == Event.Phase.IN_PROGRESS) {
+                if (event.phase == EventController.Phase.IN_PROGRESS) {
                     event.broadcastToAllExcept(message, userId)
                 }
                 locationDataSource.insertLocation(

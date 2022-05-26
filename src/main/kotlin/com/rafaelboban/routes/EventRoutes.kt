@@ -1,12 +1,11 @@
 package com.rafaelboban.routes
 
 import com.rafaelboban.EventServer
-import com.rafaelboban.data.event.Event
+import com.rafaelboban.data.event.EventController
 import com.rafaelboban.data.requests.CreateEventRequest
 import com.rafaelboban.data.requests.EventStatusRequest
 import com.rafaelboban.data.requests.JoinEventRequest
 import com.rafaelboban.data.responses.CreateJoinEventResponse
-import com.rafaelboban.plugins.TrackingSession
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
@@ -14,7 +13,6 @@ import io.ktor.server.auth.jwt.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import io.ktor.server.sessions.*
 
 fun Route.createEvent() {
 
@@ -30,7 +28,7 @@ fun Route.createEvent() {
                 return@post
             }
 
-            val event = Event(request.name, userId)
+            val event = EventController(request.name, userId)
             EventServer.events[event.id] = event
 
             val response = CreateJoinEventResponse(event.id, event.joinCode)
