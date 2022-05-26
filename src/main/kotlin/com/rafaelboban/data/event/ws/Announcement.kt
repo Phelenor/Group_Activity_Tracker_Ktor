@@ -3,6 +3,7 @@ package com.rafaelboban.data.event.ws
 import com.rafaelboban.utils.Constants.TYPE_ANNOUNCEMENT
 
 data class Announcement(
+    val eventId: String,
     val message: String,
     val timestamp: Long,
     val announcementType: Int

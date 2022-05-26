@@ -3,6 +3,7 @@ package com.rafaelboban.routes
 import com.rafaelboban.EventServer
 import com.rafaelboban.data.event.Event
 import com.rafaelboban.data.requests.CreateEventRequest
+import com.rafaelboban.data.requests.EventStatusRequest
 import com.rafaelboban.data.requests.JoinEventRequest
 import com.rafaelboban.data.responses.CreateJoinEventResponse
 import com.rafaelboban.plugins.TrackingSession
@@ -54,6 +55,25 @@ fun Route.joinEvent() {
 
             val response = CreateJoinEventResponse(event.id, request.joinCode)
             call.respond(HttpStatusCode.OK, response)
+        }
+    }
+}
+
+fun Route.checkEventStatus() {
+
+    authenticate {
+        post("/api/event-status") {
+            val request = call.receiveOrNull<EventStatusRequest>() ?: kotlin.run {
+                call.respond(HttpStatusCode.BadRequest)
+                return@post
+            }
+
+            EventServer.events.values.find { it.id == request.id } ?: run {
+                call.respond(HttpStatusCode.NotFound)
+                return@post
+            }
+
+            call.respond(HttpStatusCode.OK)
         }
     }
 }

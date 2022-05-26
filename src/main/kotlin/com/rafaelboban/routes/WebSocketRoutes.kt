@@ -8,8 +8,6 @@ import com.rafaelboban.data.event.ws.*
 import com.rafaelboban.data.event.ws.ChatMessage
 import com.rafaelboban.data.location.Location
 import com.rafaelboban.data.location.LocationDataSource
-import com.rafaelboban.data.message.Message
-import com.rafaelboban.data.message.MessageDataSource
 import com.rafaelboban.plugins.TrackingSession
 import com.rafaelboban.utils.Constants.TYPE_ANNOUNCEMENT
 import com.rafaelboban.utils.Constants.TYPE_CHAT_MESSAGE
@@ -24,12 +22,17 @@ import io.ktor.websocket.*
 import kotlinx.coroutines.channels.consumeEach
 import org.koin.ktor.ext.inject
 
-fun Route.eventWebSocket(locationDataSource: LocationDataSource, messageDataSource: MessageDataSource) {
+fun Route.eventWebSocket(locationDataSource: LocationDataSource) {
     standardWebSocket("/ws/event") { socket, userId, message, payload ->
         when (payload) {
             is JoinEventHandshake -> {
                 val event = EventServer.events[payload.eventId] ?: throw IllegalArgumentException()
-                if (event.containsParticipant(payload.userId).not()) {
+                if (event.containsParticipant(payload.userId)) {
+                    val reconnectedParticipant = event.participants.find { it.id == payload.userId }!!.copy(
+                        socket = socket
+                    )
+                    event.reconnectParticipant(reconnectedParticipant)
+                } else {
                     event.addParticipant(payload.userId, payload.username, socket)
                 }
             }
@@ -51,17 +54,19 @@ fun Route.eventWebSocket(locationDataSource: LocationDataSource, messageDataSour
             is ChatMessage -> {
                 val event = EventServer.events[payload.eventId] ?: return@standardWebSocket
                 event.broadcast(message)
-                messageDataSource.insertMessage(Message(userId, payload.timestamp, payload.message))
+            }
+            is Announcement -> {
+                val event = EventServer.events[payload.eventId] ?: return@standardWebSocket
+                event.broadcast(message)
             }
             is PhaseChange -> {
                 val event = EventServer.events[payload.eventId] ?: return@standardWebSocket
-                println("PHASE CHANGE: ${payload.phase}")
                 event.phase = payload.phase
                 event.broadcastToAllExcept(message, userId)
             }
             is DisconnectRequest -> {
                 val event = EventServer.events[payload.eventId] ?: return@standardWebSocket
-                event.removeParticipant(userId)
+                event.removeParticipant(userId, payload.username)
             }
         }
     }

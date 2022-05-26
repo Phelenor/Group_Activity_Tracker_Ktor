@@ -51,7 +51,6 @@ class Event(val name: String, private val ownerId: String) {
         lastUpdateTimestamp = System.currentTimeMillis()
         participants.forEach { participant ->
             if (participant.id != exceptParticipantId && participant.socket.isActive) {
-                println("broadcast message -> ${participant.username}")
                 participant.socket.send(Frame.Text(message))
             }
         }
@@ -68,6 +67,7 @@ class Event(val name: String, private val ownerId: String) {
         participants = participants + participant
 
         val announcement = Announcement(
+            id,
             "$username joined.",
             System.currentTimeMillis(),
             Announcement.TYPE_PLAYER_JOINED
@@ -76,22 +76,37 @@ class Event(val name: String, private val ownerId: String) {
         broadcastParticipantStatus()
     }
 
-    fun removeParticipant(userId: String) {
-        val participantToRemove = participants.find { it.id == userId } ?: return
-        participants = participants - participantToRemove
-        CoroutineScope(Dispatchers.IO).launch {
-            broadcastParticipantStatus()
-        }
+    suspend fun removeParticipant(userId: String, username: String) {
+        removeParticipantFromList(userId)
+
+        val announcement = Announcement(
+            id,
+            "$username quit.",
+            System.currentTimeMillis(),
+            Announcement.TYPE_PLAYER_LEFT
+        )
+
+        broadcast(gson.toJson(announcement))
+        broadcastParticipantStatus()
 
         if (participants.isEmpty()) {
             EventServer.events.remove(id)
         }
     }
 
+    fun reconnectParticipant(participant: Participant) {
+        removeParticipantFromList(participant.id)
+        participants = participants + participant
+    }
+
+    private fun removeParticipantFromList(userId: String) {
+        val participantToRemove = participants.find { it.id == userId } ?: return
+        participants = participants - participantToRemove
+    }
+
     fun containsParticipant(participantId: String): Boolean {
         return participants.find { it.id == participantId } != null
     }
-
 
     private fun eventInProgress() {
         broadcastStatusJob = CoroutineScope(Dispatchers.IO).launch {
@@ -102,12 +117,14 @@ class Event(val name: String, private val ownerId: String) {
         }
     }
 
-    fun finishActivity() {
+    private fun finishActivity() {
         broadcastStatusJob?.cancel()
     }
 
-    fun killEvent() {
-
+    suspend fun killEvent() {
+        participants.forEach { participant ->
+            participant.socket.close()
+        }
     }
 
     enum class Phase {

@@ -1,6 +1,5 @@
 package com.rafaelboban.routes
 
-import com.rafaelboban.data.message.MessageDataSource
 import com.rafaelboban.data.requests.MessagesRequest
 import io.ktor.http.*
 import io.ktor.server.application.*
