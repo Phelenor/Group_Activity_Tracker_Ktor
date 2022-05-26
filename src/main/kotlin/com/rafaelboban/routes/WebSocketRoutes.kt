@@ -28,10 +28,8 @@ fun Route.eventWebSocket(locationDataSource: LocationDataSource, messageDataSour
     standardWebSocket("/ws/event") { socket, userId, message, payload ->
         when (payload) {
             is JoinEventHandshake -> {
-                println("HANDSHAKE ATTEMPT")
                 val event = EventServer.events[payload.eventId] ?: throw IllegalArgumentException()
                 if (event.containsParticipant(payload.userId).not()) {
-                    println("HANDSHAKE SUCCESS")
                     event.addParticipant(payload.userId, payload.username, socket)
                 }
             }
