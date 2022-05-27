@@ -2,6 +2,7 @@ package com.rafaelboban.routes
 
 import com.rafaelboban.EventServer
 import com.rafaelboban.data.event.EventController
+import com.rafaelboban.data.event.EventDataSource
 import com.rafaelboban.data.requests.CreateEventRequest
 import com.rafaelboban.data.requests.EventStatusRequest
 import com.rafaelboban.data.requests.JoinEventRequest
@@ -51,6 +52,11 @@ fun Route.joinEvent() {
                 return@post
             }
 
+            if (event.startTimestamp > 0) {
+                call.respond(HttpStatusCode.BadRequest)
+                return@post
+            }
+
             val response = CreateJoinEventResponse(event.id, request.joinCode)
             call.respond(HttpStatusCode.OK, response)
         }
@@ -75,3 +81,19 @@ fun Route.checkEventStatus() {
         }
     }
 }
+
+fun Route.getEvents(eventDataSource: EventDataSource) {
+
+    authenticate {
+        get("/api/events") {
+            val userId = call.principal<JWTPrincipal>()?.getClaim("userId", String::class) ?: run {
+                call.respond(HttpStatusCode.Unauthorized)
+                return@get
+            }
+
+            val events = eventDataSource.getEventsForUser(userId).sortedByDescending { it.startTimestamp }
+            call.respond(HttpStatusCode.OK, events)
+        }
+    }
+}
+

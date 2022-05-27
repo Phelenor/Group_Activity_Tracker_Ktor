@@ -5,7 +5,6 @@ import com.rafaelboban.data.marker.MarkerDataSource
 import com.rafaelboban.data.requests.DeleteMarkerRequest
 import com.rafaelboban.data.requests.MarkerRequest
 import com.rafaelboban.data.responses.DeleteMarkerResponse
-import com.rafaelboban.plugins.TrackingSession
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
@@ -13,7 +12,6 @@ import io.ktor.server.auth.jwt.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import io.ktor.server.sessions.*
 
 fun Route.createMarker(markerDataSource: MarkerDataSource) {
 

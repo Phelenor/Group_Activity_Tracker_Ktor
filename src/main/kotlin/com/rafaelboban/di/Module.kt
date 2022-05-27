@@ -1,6 +1,7 @@
 package com.rafaelboban.di
 
 import com.google.gson.Gson
+import com.rafaelboban.data.event.EventDataSource
 import com.rafaelboban.data.location.LocationDataSource
 import com.rafaelboban.data.marker.MarkerDataSource
 import com.rafaelboban.data.user.UserDataSource
@@ -14,5 +15,6 @@ val mainModule = module {
     single { UserDataSource(get()) }
     single { MarkerDataSource(get()) }
     single { LocationDataSource(get()) }
+    single { EventDataSource(get()) }
     single { Gson() }
 }

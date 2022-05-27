@@ -3,7 +3,7 @@ package com.rafaelboban.data.location
 import org.bson.codecs.pojo.annotations.BsonId
 import org.bson.types.ObjectId
 
-data class Location(
+data class LocationPoint(
     val userId: String,
     val eventId: String,
     val timestamp: Long,

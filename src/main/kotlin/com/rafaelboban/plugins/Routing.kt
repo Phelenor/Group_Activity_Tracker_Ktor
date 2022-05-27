@@ -1,5 +1,7 @@
 package com.rafaelboban.plugins
 
+import com.google.gson.Gson
+import com.rafaelboban.data.event.EventDataSource
 import com.rafaelboban.data.location.LocationDataSource
 import com.rafaelboban.data.marker.MarkerDataSource
 import com.rafaelboban.data.user.UserDataSource
@@ -13,6 +15,8 @@ fun Application.configureRouting(tokenConfig: TokenConfig) {
     val userDataSource by inject<UserDataSource>()
     val markerDataSource by inject<MarkerDataSource>()
     val locationDataSource by inject<LocationDataSource>()
+    val eventDataSource by inject<EventDataSource>()
+    val gson by inject<Gson>()
 
     routing {
         register(userDataSource)
@@ -23,7 +27,8 @@ fun Application.configureRouting(tokenConfig: TokenConfig) {
         createEvent()
         joinEvent()
         checkEventStatus()
-        eventWebSocket(locationDataSource)
+        getEvents(eventDataSource)
+        eventWebSocket(locationDataSource, eventDataSource, gson)
         authenticate()
     }
 }

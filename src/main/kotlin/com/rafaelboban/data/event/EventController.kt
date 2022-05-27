@@ -6,19 +6,24 @@ import com.rafaelboban.data.event.ws.Announcement
 import com.rafaelboban.data.event.ws.ParticipantList
 import io.ktor.websocket.*
 import kotlinx.coroutines.*
+import org.bson.codecs.pojo.annotations.BsonId
+import org.bson.types.ObjectId
 import org.koin.java.KoinJavaComponent.inject
 import java.util.UUID
 
-class EventController(val name: String, private val ownerId: String) {
+class EventController(val name: String, val ownerId: String) {
 
     private val gson: Gson by inject(Gson::class.java)
+    private val eventDataSource: EventDataSource by inject(EventDataSource::class.java)
 
-    val id: String = UUID.randomUUID().toString()
+    val id: String = ObjectId().toString()
     var participants: List<Participant> = emptyList()
     private var lastUpdateTimestamp: Long = Long.MIN_VALUE
     val joinCode: String = List(6) { (('A'..'Z') + ('0'..'9')).random() }.joinToString("")
 
-    private var broadcastStatusJob: Job? = null
+    private val allParticipants = mutableSetOf<String>()
+    var startTimestamp = 0L
+    private var endTimestamp = 0L
 
     var phase = Phase.WAITING
         set(value) {
@@ -32,7 +37,7 @@ class EventController(val name: String, private val ownerId: String) {
 
     private var phaseChangedListener: ((Phase) -> Unit)? = { newPhase ->
         when (newPhase) {
-            Phase.IN_PROGRESS -> eventInProgress()
+            Phase.IN_PROGRESS -> startTimestamp = System.currentTimeMillis()
             Phase.FINISHED -> finishActivity()
             else -> Unit
         }
@@ -56,15 +61,10 @@ class EventController(val name: String, private val ownerId: String) {
         }
     }
 
-    private suspend fun broadcastParticipantStatus() {
-        val data = participants.sortedWith(compareBy<Participant> { it.id == ownerId }.thenBy { it.isActive })
-            .map { ParticipantData(it.username, it.distance, it.isActive) }
-        broadcast(gson.toJson(ParticipantList(data)))
-    }
-
     suspend fun addParticipant(userId: String, username: String, socket: WebSocketSession) {
         val participant = Participant(userId, username, socket)
         participants = participants + participant
+        allParticipants.add(userId)
 
         val announcement = Announcement(
             id,
@@ -73,7 +73,6 @@ class EventController(val name: String, private val ownerId: String) {
             Announcement.TYPE_PLAYER_JOINED
         )
         broadcast(gson.toJson(announcement))
-        broadcastParticipantStatus()
     }
 
     suspend fun removeParticipant(userId: String, username: String) {
@@ -87,7 +86,6 @@ class EventController(val name: String, private val ownerId: String) {
         )
 
         broadcast(gson.toJson(announcement))
-        broadcastParticipantStatus()
 
         if (participants.isEmpty()) {
             EventServer.events.remove(id)
@@ -108,17 +106,15 @@ class EventController(val name: String, private val ownerId: String) {
         return participants.find { it.id == participantId } != null
     }
 
-    private fun eventInProgress() {
-        broadcastStatusJob = CoroutineScope(Dispatchers.IO).launch {
-            while (phase == Phase.IN_PROGRESS) {
-                broadcastParticipantStatus()
-                delay(5000L)
-            }
-        }
-    }
-
     private fun finishActivity() {
-        broadcastStatusJob?.cancel()
+        endTimestamp = System.currentTimeMillis()
+        // Don't save if duration was less than 5 minutes TODO
+        val durationMinutes = (endTimestamp - startTimestamp) / 1000.0 / 60
+        if (durationMinutes < 0.2) return
+        val event = Event(id, allParticipants, startTimestamp, endTimestamp, ownerId)
+        CoroutineScope(Dispatchers.IO).launch {
+            eventDataSource.insertEvent(event)
+        }
     }
 
     suspend fun killEvent() {

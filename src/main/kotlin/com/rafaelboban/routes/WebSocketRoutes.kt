@@ -6,12 +6,13 @@ import com.rafaelboban.EventServer
 import com.rafaelboban.data.event.*
 import com.rafaelboban.data.event.ws.*
 import com.rafaelboban.data.event.ws.ChatMessage
-import com.rafaelboban.data.location.Location
+import com.rafaelboban.data.location.LocationPoint
 import com.rafaelboban.data.location.LocationDataSource
 import com.rafaelboban.plugins.TrackingSession
 import com.rafaelboban.utils.Constants.TYPE_ANNOUNCEMENT
 import com.rafaelboban.utils.Constants.TYPE_CHAT_MESSAGE
 import com.rafaelboban.utils.Constants.TYPE_DISCONNECT_REQUEST
+import com.rafaelboban.utils.Constants.TYPE_FINISH_EVENT
 import com.rafaelboban.utils.Constants.TYPE_JOIN_HANDSHAKE
 import com.rafaelboban.utils.Constants.TYPE_LOCATION_DATA
 import com.rafaelboban.utils.Constants.TYPE_PHASE_CHANGE
@@ -22,11 +23,11 @@ import io.ktor.websocket.*
 import kotlinx.coroutines.channels.consumeEach
 import org.koin.ktor.ext.inject
 
-fun Route.eventWebSocket(locationDataSource: LocationDataSource) {
+fun Route.eventWebSocket(locationDataSource: LocationDataSource, eventDataSource: EventDataSource, gson: Gson) {
     standardWebSocket("/ws/event") { socket, userId, message, payload ->
         when (payload) {
             is JoinEventHandshake -> {
-                val event = EventServer.events[payload.eventId] ?: throw IllegalArgumentException()
+                val event = EventServer.events[payload.eventId] ?: return@standardWebSocket
                 if (event.containsParticipant(payload.userId)) {
                     val reconnectedParticipant = event.participants.find { it.id == payload.userId }!!.copy(
                         socket = socket
@@ -42,7 +43,7 @@ fun Route.eventWebSocket(locationDataSource: LocationDataSource) {
                     event.broadcastToAllExcept(message, userId)
                 }
                 locationDataSource.insertLocation(
-                    Location(
+                    LocationPoint(
                         userId,
                         payload.eventId,
                         payload.timestamp,
@@ -61,12 +62,39 @@ fun Route.eventWebSocket(locationDataSource: LocationDataSource) {
             }
             is PhaseChange -> {
                 val event = EventServer.events[payload.eventId] ?: return@standardWebSocket
-                event.phase = payload.phase
-                event.broadcastToAllExcept(message, userId)
+                if (userId == event.ownerId) {
+                    event.phase = payload.phase
+                    event.broadcastToAllExcept(message, userId)
+                }
             }
             is DisconnectRequest -> {
                 val event = EventServer.events[payload.eventId] ?: return@standardWebSocket
                 event.removeParticipant(userId, payload.username)
+            }
+            is FinishEvent -> {
+                val event = EventServer.events[payload.eventId] ?: return@standardWebSocket
+                val announcement = Announcement(
+                    event.id,
+                    "${payload.username} has finished his activity.",
+                    System.currentTimeMillis(),
+                    Announcement.TYPE_PLAYER_FINISHED
+                )
+
+                event.broadcast(gson.toJson(announcement))
+
+                val endTimestamp = System.currentTimeMillis()
+                val durationMinutes = (endTimestamp - event.startTimestamp) / 1000.0 / 60
+                if (durationMinutes < 0.2) return@standardWebSocket
+
+                eventDataSource.insertSubEvent(
+                    SubEvent(
+                        event.id,
+                        payload.userId,
+                        event.startTimestamp,
+                        endTimestamp,
+                        payload.distance
+                    )
+                )
             }
         }
     }
@@ -101,6 +129,7 @@ fun Route.standardWebSocket(
                         TYPE_ANNOUNCEMENT -> Announcement::class.java
                         TYPE_PHASE_CHANGE -> PhaseChange::class.java
                         TYPE_DISCONNECT_REQUEST -> DisconnectRequest::class.java
+                        TYPE_FINISH_EVENT -> FinishEvent::class.java
                         else -> BaseModel::class.java
                     }
                     val payload = gson.fromJson(message, type)
@@ -109,8 +138,6 @@ fun Route.standardWebSocket(
             }
         } catch (e: Exception) {
             e.printStackTrace()
-        } finally {
-            // Handle disconnects
         }
     }
 }
