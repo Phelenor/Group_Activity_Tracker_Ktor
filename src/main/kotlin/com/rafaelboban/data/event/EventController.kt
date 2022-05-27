@@ -3,13 +3,13 @@ package com.rafaelboban.data.event
 import com.google.gson.Gson
 import com.rafaelboban.EventServer
 import com.rafaelboban.data.event.ws.Announcement
-import com.rafaelboban.data.event.ws.ParticipantList
 import io.ktor.websocket.*
-import kotlinx.coroutines.*
-import org.bson.codecs.pojo.annotations.BsonId
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 import org.bson.types.ObjectId
 import org.koin.java.KoinJavaComponent.inject
-import java.util.UUID
 
 class EventController(val name: String, val ownerId: String) {
 
@@ -111,7 +111,7 @@ class EventController(val name: String, val ownerId: String) {
         // Don't save if duration was less than 5 minutes TODO
         val durationMinutes = (endTimestamp - startTimestamp) / 1000.0 / 60
         if (durationMinutes < 0.2) return
-        val event = Event(id, allParticipants, startTimestamp, endTimestamp, ownerId)
+        val event = Event(id, name, allParticipants, startTimestamp, endTimestamp, ownerId)
         CoroutineScope(Dispatchers.IO).launch {
             eventDataSource.insertEvent(event)
         }

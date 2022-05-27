@@ -4,6 +4,7 @@ import com.rafaelboban.data.location.LocationPoint
 
 data class EventData(
     val id: String,
+    val name: String,
     val startTimestamp: Long,
     val endTimestamp: Long,
     val distance: Double,

@@ -21,14 +21,11 @@ class EventDataSource(db: CoroutineDatabase) {
     }
 
     suspend fun getEventsForUser(userId: String): List<EventData> {
-        val events = subEvents.find(SubEvent::userId eq userId).toList().map { event ->
-            val parentEvent = events.findOne(Event::id eq event.eventId) ?: throw IllegalStateException()
+        val events = subEvents.find(SubEvent::userId eq userId).toList().mapNotNull { event ->
+            val parentEvent = events.findOne(Event::id eq event.eventId) ?: return@mapNotNull null
             val points = locations.find(LocationPoint::eventId eq parentEvent.id, LocationPoint::userId eq userId).toList()
 
-            val parentEventOwnerSubEvent =
-                subEvents.findOne(SubEvent::userId eq parentEvent.ownerId) ?: throw IllegalStateException()
-            val parentDistance = parentEventOwnerSubEvent.distance
-
+            val parentEventOwnerSubEvent = subEvents.findOne(SubEvent::userId eq parentEvent.ownerId) ?: return@mapNotNull null
 
             val participantUsernames = parentEvent.participants.mapNotNull { userId ->
                 val user = users.findOne(User::id eq userId)
@@ -36,15 +33,16 @@ class EventDataSource(db: CoroutineDatabase) {
             }
 
             EventData(
-                event.id,
-                event.startTimestamp,
-                event.endTimestamp,
-                event.distance,
-                parentEvent.startTimestamp,
-                parentEvent.endTimestamp,
-                parentDistance,
-                participantUsernames,
-                points
+                    event.id,
+                    parentEvent.name,
+                    event.startTimestamp,
+                    event.endTimestamp,
+                    event.distance,
+                    parentEvent.startTimestamp,
+                    parentEvent.endTimestamp,
+                    parentEventOwnerSubEvent.distance,
+                    participantUsernames,
+                    points
             )
         }
 
