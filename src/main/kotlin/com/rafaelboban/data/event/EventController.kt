@@ -67,10 +67,10 @@ class EventController(val name: String, val ownerId: String) {
         allParticipants.add(userId)
 
         val announcement = Announcement(
-            id,
-            "$username joined.",
-            System.currentTimeMillis(),
-            Announcement.TYPE_PLAYER_JOINED
+                id,
+                "$username joined.",
+                System.currentTimeMillis(),
+                Announcement.TYPE_PLAYER_JOINED
         )
         broadcast(gson.toJson(announcement))
     }
@@ -79,10 +79,10 @@ class EventController(val name: String, val ownerId: String) {
         removeParticipantFromList(userId)
 
         val announcement = Announcement(
-            id,
-            "$username quit.",
-            System.currentTimeMillis(),
-            Announcement.TYPE_PLAYER_LEFT
+                id,
+                "$username quit.",
+                System.currentTimeMillis(),
+                Announcement.TYPE_PLAYER_LEFT
         )
 
         broadcast(gson.toJson(announcement))
@@ -108,9 +108,8 @@ class EventController(val name: String, val ownerId: String) {
 
     private fun finishActivity() {
         endTimestamp = System.currentTimeMillis()
-        // Don't save if duration was less than 5 minutes TODO
         val durationMinutes = (endTimestamp - startTimestamp) / 1000.0 / 60
-        if (durationMinutes < 0.2) return
+        if (durationMinutes < 3) return
         val event = Event(id, name, allParticipants, startTimestamp, endTimestamp, ownerId)
         CoroutineScope(Dispatchers.IO).launch {
             eventDataSource.insertEvent(event)
