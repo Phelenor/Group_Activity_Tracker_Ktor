@@ -8,28 +8,38 @@ object EventServer {
 
     val events = ConcurrentHashMap<String, EventController>()
 
-    private val eventsToRemove = mutableListOf<String>()
+    private val inactiveEvents = ConcurrentHashMap<String, Long>()
 
     init {
         CoroutineScope(Dispatchers.Default).launch {
             while (true) {
                 delay(5000L)
 
-                eventsToRemove.removeIf { events[it]?.participants?.isNotEmpty() == true }
-
-                eventsToRemove.forEach { id ->
-                    if (events[id]?.participants?.isEmpty() == true) {
-                        events[id]?.killEvent()
-                        events.remove(id)
-                    }
-                }
-
                 events.forEach { entry ->
+                    val currentTime = System.currentTimeMillis()
                     if (entry.value.participants.isEmpty()) {
-                        eventsToRemove.add(entry.key)
+                        inactiveEvents[entry.key] = currentTime
+                    } else if (currentTime - entry.value.lastUpdate > 30 * 60 * 1000) {
+                        inactiveEvents[entry.key] = currentTime
                     }
                 }
-                println("Active events: ${events.map { "${it.value.name} - ${it.value.participants.size} - ${it.value.participants.map { it.username }}" }}")
+
+                val status = events.map { "${it.value.name}: ${it.value.participants.map { it.username }}\n" }
+                println("Active events:\n$status")
+            }
+        }
+
+        CoroutineScope(Dispatchers.Default).launch {
+            while (true) {
+                delay(60000L)
+
+                inactiveEvents.forEach { entry ->
+                    if (System.currentTimeMillis() - entry.value > 60000) {
+                        events[entry.key]?.killEvent()
+                        events.remove(entry.key)
+                        inactiveEvents.remove(entry.key)
+                    }
+                }
             }
         }
     }

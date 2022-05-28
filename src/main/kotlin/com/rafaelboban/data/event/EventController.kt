@@ -25,6 +25,8 @@ class EventController(val name: String, val ownerId: String) {
     var startTimestamp = 0L
     private var endTimestamp = 0L
 
+    var lastUpdate = 0L
+
     var phase = Phase.WAITING
         set(value) {
             synchronized(field) {

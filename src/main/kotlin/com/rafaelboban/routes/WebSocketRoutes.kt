@@ -28,10 +28,9 @@ fun Route.eventWebSocket(locationDataSource: LocationDataSource, eventDataSource
         when (payload) {
             is JoinEventHandshake -> {
                 val event = EventServer.events[payload.eventId] ?: return@standardWebSocket
+                event.lastUpdate = System.currentTimeMillis()
                 if (event.containsParticipant(payload.userId)) {
-                    val reconnectedParticipant = event.participants.find { it.id == payload.userId }!!.copy(
-                            socket = socket
-                    )
+                    val reconnectedParticipant = event.participants.find { it.id == payload.userId }!!.copy(socket = socket)
                     event.reconnectParticipant(reconnectedParticipant)
                 } else {
                     event.addParticipant(payload.userId, payload.username, socket)
@@ -39,29 +38,33 @@ fun Route.eventWebSocket(locationDataSource: LocationDataSource, eventDataSource
             }
             is LocationData -> {
                 val event = EventServer.events[payload.eventId] ?: return@standardWebSocket
+                event.lastUpdate = System.currentTimeMillis()
                 if (event.phase == EventController.Phase.IN_PROGRESS) {
                     event.broadcastToAllExcept(message, userId)
                 }
                 locationDataSource.insertLocation(
-                        LocationPoint(
-                                userId,
-                                payload.eventId,
-                                payload.timestamp,
-                                payload.latitude,
-                                payload.longitude
-                        )
+                    LocationPoint(
+                        userId,
+                        payload.eventId,
+                        payload.timestamp,
+                        payload.latitude,
+                        payload.longitude
+                    )
                 )
             }
             is ChatMessage -> {
                 val event = EventServer.events[payload.eventId] ?: return@standardWebSocket
+                event.lastUpdate = System.currentTimeMillis()
                 event.broadcast(message)
             }
             is Announcement -> {
                 val event = EventServer.events[payload.eventId] ?: return@standardWebSocket
+                event.lastUpdate = System.currentTimeMillis()
                 event.broadcast(message)
             }
             is PhaseChange -> {
                 val event = EventServer.events[payload.eventId] ?: return@standardWebSocket
+                event.lastUpdate = System.currentTimeMillis()
                 if (userId == event.ownerId) {
                     event.phase = payload.phase
                     event.broadcastToAllExcept(message, userId)
@@ -69,15 +72,17 @@ fun Route.eventWebSocket(locationDataSource: LocationDataSource, eventDataSource
             }
             is DisconnectRequest -> {
                 val event = EventServer.events[payload.eventId] ?: return@standardWebSocket
+                event.lastUpdate = System.currentTimeMillis()
                 event.removeParticipant(userId, payload.username)
             }
             is FinishEvent -> {
                 val event = EventServer.events[payload.eventId] ?: return@standardWebSocket
+                event.lastUpdate = System.currentTimeMillis()
                 val announcement = Announcement(
-                        event.id,
-                        "${payload.username} has finished his activity.",
-                        System.currentTimeMillis(),
-                        Announcement.TYPE_PLAYER_FINISHED
+                    event.id,
+                    "${payload.username} has finished his activity.",
+                    System.currentTimeMillis(),
+                    Announcement.TYPE_PLAYER_FINISHED
                 )
 
                 event.broadcast(gson.toJson(announcement))
@@ -87,13 +92,13 @@ fun Route.eventWebSocket(locationDataSource: LocationDataSource, eventDataSource
                 if (durationMinutes < 3) return@standardWebSocket
 
                 eventDataSource.insertSubEvent(
-                        SubEvent(
-                                event.id,
-                                payload.userId,
-                                event.startTimestamp,
-                                endTimestamp,
-                                payload.distance
-                        )
+                    SubEvent(
+                        event.id,
+                        payload.userId,
+                        event.startTimestamp,
+                        endTimestamp,
+                        payload.distance
+                    )
                 )
             }
         }
@@ -101,13 +106,13 @@ fun Route.eventWebSocket(locationDataSource: LocationDataSource, eventDataSource
 }
 
 fun Route.standardWebSocket(
-        route: String,
-        handleFrame: suspend (
-                socket: DefaultWebSocketServerSession,
-                participantId: String,
-                message: String,
-                payload: BaseModel
-        ) -> Unit
+    route: String,
+    handleFrame: suspend (
+        socket: DefaultWebSocketServerSession,
+        participantId: String,
+        message: String,
+        payload: BaseModel
+    ) -> Unit
 ) {
     webSocket(route) {
         val gson: Gson by inject()
