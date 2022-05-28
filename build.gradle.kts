@@ -11,7 +11,7 @@ plugins {
 }
 
 group = "com.rafaelboban"
-version = "0.0.1"
+version = "1.0.0"
 application {
     mainClass.set("io.ktor.server.netty.EngineMain")
 
@@ -28,8 +28,6 @@ tasks {
     create("stage").dependsOn("installDist")
 }
 
-val sshAntTask = configurations.create("sshAntTask")
-
 dependencies {
     implementation("io.ktor:ktor-server-core-jvm:$ktor_version")
     implementation("io.ktor:ktor-server-auth-jvm:$ktor_version")
@@ -45,15 +43,15 @@ dependencies {
     testImplementation("io.ktor:ktor-server-tests-jvm:$ktor_version")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version")
 
+    // KMongo
     implementation("org.litote.kmongo:kmongo:$kmongo_version")
     implementation("org.litote.kmongo:kmongo-coroutine:$kmongo_version")
 
+    // Koin
     implementation("io.insert-koin:koin-ktor:$koin_version")
 
     // KDFs for safe password storage
     implementation("com.password4j:password4j:1.5.4")
 
-    implementation("commons-codec:commons-codec:$commons_codec_version")
 
-    sshAntTask("org.apache.ant:ant-jsch:1.10.12")
 }
