@@ -11,7 +11,11 @@ import org.litote.kmongo.coroutine.coroutine
 import org.litote.kmongo.reactivestreams.KMongo
 
 val mainModule = module {
-    single { KMongo.createClient().coroutine.getDatabase(Constants.DATABASE_NAME) }
+    single {
+        KMongo.createClient(
+            connectionString = "mongodb+srv://Phelenor:${System.getenv(Constants.MONGO_PW)}@clustergat.rhrx9ld.mongodb.net/?retryWrites=true&w=majority"
+        ).coroutine.getDatabase(Constants.DATABASE_NAME)
+    }
     single { UserDataSource(get()) }
     single { MarkerDataSource(get()) }
     single { LocationDataSource(get()) }

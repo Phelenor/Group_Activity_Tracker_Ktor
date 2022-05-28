@@ -15,4 +15,6 @@ object Constants {
     const val TYPE_PARTICIPANT_LIST = "TYPE_PARTICIPANT_LIST"
     const val TYPE_DISCONNECT_REQUEST = "TYPE_DISCONNECT_REQUEST"
     const val TYPE_FINISH_EVENT = "TYPE_FINISH_EVENT"
+
+    const val MONGO_PW = "MONGO_PW"
 }
