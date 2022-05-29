@@ -6,6 +6,7 @@ import com.rafaelboban.data.event.EventDataSource
 import com.rafaelboban.data.requests.CreateEventRequest
 import com.rafaelboban.data.requests.EventStatusRequest
 import com.rafaelboban.data.requests.JoinEventRequest
+import com.rafaelboban.data.requests.LocationPointsRequest
 import com.rafaelboban.data.responses.CreateJoinEventResponse
 import io.ktor.http.*
 import io.ktor.server.application.*
@@ -102,4 +103,20 @@ fun Route.getEvents(eventDataSource: EventDataSource) {
         }
     }
 }
+
+fun Route.getPoints(eventDataSource: EventDataSource) {
+
+    authenticate {
+        post("/api/points") {
+            val request = call.receiveOrNull<LocationPointsRequest>() ?: kotlin.run {
+                call.respond(HttpStatusCode.BadRequest)
+                return@post
+            }
+
+            val points = eventDataSource.getPointsForEvent(request.eventId, request.userId)
+            call.respond(HttpStatusCode.OK, points)
+        }
+    }
+}
+
 

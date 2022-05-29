@@ -69,10 +69,10 @@ class EventController(val name: String, val ownerId: String) {
         allParticipants.add(userId)
 
         val announcement = Announcement(
-                id,
-                "$username joined.",
-                System.currentTimeMillis(),
-                Announcement.TYPE_PLAYER_JOINED
+            id,
+            "$username joined.",
+            System.currentTimeMillis(),
+            Announcement.TYPE_PLAYER_JOINED
         )
         broadcast(gson.toJson(announcement))
     }
@@ -81,10 +81,10 @@ class EventController(val name: String, val ownerId: String) {
         removeParticipantFromList(userId)
 
         val announcement = Announcement(
-                id,
-                "$username quit.",
-                System.currentTimeMillis(),
-                Announcement.TYPE_PLAYER_LEFT
+            id,
+            "$username quit.",
+            System.currentTimeMillis(),
+            Announcement.TYPE_PLAYER_LEFT
         )
 
         broadcast(gson.toJson(announcement))
