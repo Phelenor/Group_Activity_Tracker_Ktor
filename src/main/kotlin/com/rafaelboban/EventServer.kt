@@ -24,7 +24,7 @@ object EventServer {
                     }
                 }
 
-                val status = events.map { "${it.value.name}: ${it.value.participants.map { it.username }}\n" }
+                val status = events.map { "${it.value.name}: ${it.value.participants.map { it.username }}" }
                 println("Active events:\n$status")
             }
         }
