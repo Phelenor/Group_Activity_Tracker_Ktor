@@ -19,12 +19,12 @@ object EventServer {
                     val currentTime = System.currentTimeMillis()
                     if (entry.value.participants.isEmpty()) {
                         inactiveEvents[entry.key] = currentTime
-                    } else if (currentTime - entry.value.lastUpdate > 30 * 60 * 1000) {
+                    } else if (currentTime - entry.value.lastUpdate > 10 * 60 * 1000) {
                         inactiveEvents[entry.key] = currentTime
                     }
                 }
 
-                val status = events.map { "${it.value.name}: ${it.value.participants.map { it.username }}" }
+                val status = events.map { "${it.value.name}(${it.value.phase.name}): ${it.value.participants.map { it.username }}" }
                 println("Active events: $status")
             }
         }
@@ -35,6 +35,7 @@ object EventServer {
 
                 inactiveEvents.forEach { entry ->
                     if (System.currentTimeMillis() - entry.value > 60000) {
+                        println("${events[entry.key]?.name} killed.")
                         events[entry.key]?.killEvent()
                         events.remove(entry.key)
                         inactiveEvents.remove(entry.key)

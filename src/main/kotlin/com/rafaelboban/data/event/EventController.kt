@@ -115,6 +115,7 @@ class EventController(val name: String, val ownerId: String) {
         if (durationMinutes < 3) return
         val event = Event(id, name, allParticipants, startTimestamp, endTimestamp, ownerId)
 
+        println("$name finished.")
         CoroutineScope(Dispatchers.IO).launch {
             val isSaved = eventDataSource.insertEvent(event)
             println("Event($name) saved: $isSaved")

@@ -71,11 +71,13 @@ fun Route.eventWebSocket(locationDataSource: LocationDataSource, eventDataSource
             }
             is DisconnectRequest -> {
                 val event = EventServer.events[payload.eventId] ?: return@standardWebSocket
+                println("$userId disconnected from ${event.name}.")
                 event.lastUpdate = System.currentTimeMillis()
                 event.removeParticipant(userId, payload.username)
             }
             is FinishEvent -> {
                 val event = EventServer.events[payload.eventId] ?: return@standardWebSocket
+                println("$userId finished ${event.name}.")
                 event.lastUpdate = System.currentTimeMillis()
                 val announcement = Announcement(
                     event.id,
