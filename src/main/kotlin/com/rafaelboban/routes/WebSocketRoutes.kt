@@ -86,19 +86,22 @@ fun Route.eventWebSocket(locationDataSource: LocationDataSource, eventDataSource
 
                 event.broadcast(gson.toJson(announcement))
 
-                val endTimestamp = System.currentTimeMillis()
-                val durationMinutes = (endTimestamp - event.startTimestamp) / 1000.0 / 60
-                if (durationMinutes < 3) return@standardWebSocket
+                if (event.startTimestamp != 0L) {
+                    val endTimestamp = System.currentTimeMillis()
+                    val durationMinutes = (endTimestamp - event.startTimestamp) / 1000.0 / 60
+                    if (durationMinutes < 3) return@standardWebSocket
 
-                eventDataSource.insertSubEvent(
-                    SubEvent(
-                        event.id,
-                        payload.userId,
-                        event.startTimestamp,
-                        endTimestamp,
-                        payload.distance
+                    val isSaved = eventDataSource.insertSubEvent(
+                        SubEvent(
+                            event.id,
+                            payload.userId,
+                            event.startTimestamp,
+                            endTimestamp,
+                            payload.distance
+                        )
                     )
-                )
+                    println("SubEvent($userId) saved: $isSaved")
+                }
             }
         }
     }

@@ -13,7 +13,7 @@ object EventServer {
     init {
         CoroutineScope(Dispatchers.Default).launch {
             while (true) {
-                delay(5000L)
+                delay(30000L)
 
                 events.forEach { entry ->
                     val currentTime = System.currentTimeMillis()
