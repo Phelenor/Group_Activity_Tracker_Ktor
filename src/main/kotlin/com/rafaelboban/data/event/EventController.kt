@@ -109,6 +109,7 @@ class EventController(val name: String, val ownerId: String) {
     }
 
     private fun finishActivity() {
+        if (startTimestamp == 0L) return
         endTimestamp = System.currentTimeMillis()
         val durationMinutes = (endTimestamp - startTimestamp) / 1000.0 / 60
         if (durationMinutes < 3) return

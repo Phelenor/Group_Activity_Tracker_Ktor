@@ -46,11 +46,9 @@ class EventDataSource(db: CoroutineDatabase) {
     }
 
     suspend fun getPointsForEvent(eventId: String, userId: String): List<LocationPoint> {
-        val points = locations.find(LocationPointData::eventId eq eventId, LocationPointData::userId eq userId)
+        return locations.find(LocationPointData::eventId eq eventId, LocationPointData::userId eq userId)
             .toList()
             .sortedBy { it.timestamp }
             .map { LocationPoint(it.latitude, it.longitude) }
-
-        return points
     }
 }

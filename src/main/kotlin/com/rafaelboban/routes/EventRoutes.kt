@@ -4,9 +4,7 @@ import com.rafaelboban.EventServer
 import com.rafaelboban.data.event.EventController
 import com.rafaelboban.data.event.EventDataSource
 import com.rafaelboban.data.requests.CreateEventRequest
-import com.rafaelboban.data.requests.EventStatusRequest
 import com.rafaelboban.data.requests.JoinEventRequest
-import com.rafaelboban.data.requests.LocationPointsRequest
 import com.rafaelboban.data.responses.CreateJoinEventResponse
 import io.ktor.http.*
 import io.ktor.server.application.*
@@ -67,15 +65,15 @@ fun Route.joinEvent() {
 fun Route.checkEventStatus() {
 
     authenticate {
-        post("/api/event-status") {
-            val request = call.receiveOrNull<EventStatusRequest>() ?: kotlin.run {
-                call.respond(HttpStatusCode.BadRequest)
-                return@post
+        get("/api/event-status/{eventId}") {
+            val eventId = call.parameters["eventId"] ?: run {
+                call.respond(HttpStatusCode.NotFound)
+                return@get
             }
 
-            EventServer.events.values.find { it.id == request.id } ?: run {
+            EventServer.events.values.find { it.id == eventId } ?: run {
                 call.respond(HttpStatusCode.NotFound)
-                return@post
+                return@get
             }
 
             call.respond(HttpStatusCode.OK)
@@ -107,13 +105,18 @@ fun Route.getEvents(eventDataSource: EventDataSource) {
 fun Route.getPoints(eventDataSource: EventDataSource) {
 
     authenticate {
-        post("/api/points") {
-            val request = call.receiveOrNull<LocationPointsRequest>() ?: kotlin.run {
-                call.respond(HttpStatusCode.BadRequest)
-                return@post
+        get("/api/points/{eventId}") {
+            val userId = call.principal<JWTPrincipal>()?.getClaim("userId", String::class) ?: run {
+                call.respond(HttpStatusCode.Unauthorized)
+                return@get
             }
 
-            val points = eventDataSource.getPointsForEvent(request.eventId, request.userId)
+            val eventId = call.parameters["eventId"] ?: run {
+                call.respond(HttpStatusCode.NotFound)
+                return@get
+            }
+
+            val points = eventDataSource.getPointsForEvent(eventId, userId)
             call.respond(HttpStatusCode.OK, points)
         }
     }
