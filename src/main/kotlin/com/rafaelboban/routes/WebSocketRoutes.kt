@@ -14,6 +14,7 @@ import com.rafaelboban.utils.Constants.TYPE_DISCONNECT_REQUEST
 import com.rafaelboban.utils.Constants.TYPE_FINISH_EVENT
 import com.rafaelboban.utils.Constants.TYPE_JOIN_HANDSHAKE
 import com.rafaelboban.utils.Constants.TYPE_LOCATION_DATA
+import com.rafaelboban.utils.Constants.TYPE_MARKER_MESSAGE
 import com.rafaelboban.utils.Constants.TYPE_PHASE_CHANGE
 import io.ktor.server.routing.*
 import io.ktor.server.sessions.*
@@ -144,6 +145,7 @@ fun Route.standardWebSocket(
                         TYPE_PHASE_CHANGE -> PhaseChange::class.java
                         TYPE_DISCONNECT_REQUEST -> DisconnectRequest::class.java
                         TYPE_FINISH_EVENT -> FinishEvent::class.java
+                        TYPE_MARKER_MESSAGE -> MarkerMessage::class.java
                         else -> BaseModel::class.java
                     }
                     val payload = gson.fromJson(message, type)
