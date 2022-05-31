@@ -2,9 +2,7 @@ package com.rafaelboban.routes
 
 import com.rafaelboban.data.marker.Marker
 import com.rafaelboban.data.marker.MarkerDataSource
-import com.rafaelboban.data.requests.DeleteMarkerRequest
 import com.rafaelboban.data.requests.MarkerRequest
-import com.rafaelboban.data.responses.DeleteMarkerResponse
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
@@ -16,7 +14,7 @@ import io.ktor.server.routing.*
 fun Route.createMarker(markerDataSource: MarkerDataSource) {
 
     authenticate {
-        post("/api/create-marker") {
+        post("/api/save-marker") {
             val request = call.receiveOrNull<MarkerRequest>() ?: kotlin.run {
                 call.respond(HttpStatusCode.BadRequest)
                 return@post
@@ -27,11 +25,7 @@ fun Route.createMarker(markerDataSource: MarkerDataSource) {
                 return@post
             }
 
-            val marker = if (request.id != null) {
-                Marker(request.title, request.snippet, request.latitude, request.longitude, userId, request.id)
-            } else {
-                Marker(request.title, request.snippet, request.latitude, request.longitude, userId)
-            }
+            val marker = Marker(request.title, request.snippet, request.latitude, request.longitude, userId, request.eventId)
 
             val wasAcknowledged = markerDataSource.insertMarker(marker)
             if (!wasAcknowledged) {
@@ -44,36 +38,21 @@ fun Route.createMarker(markerDataSource: MarkerDataSource) {
     }
 }
 
-fun Route.deleteMarker(markerDataSource: MarkerDataSource) {
-
-    authenticate {
-        post("/api/delete-marker") {
-            val request = call.receiveOrNull<DeleteMarkerRequest>() ?: kotlin.run {
-                call.respond(HttpStatusCode.BadRequest)
-                return@post
-            }
-
-            val wasAcknowledged = markerDataSource.removeMarker(request.id)
-            if (!wasAcknowledged) {
-                call.respond(HttpStatusCode.Conflict)
-                return@post
-            }
-
-            call.respond(HttpStatusCode.OK, DeleteMarkerResponse(request.id))
-        }
-    }
-}
-
 fun Route.getMarkers(markerDataSource: MarkerDataSource) {
 
     authenticate {
-        get("/api/markers") {
+        get("/api/markers/{eventId}") {
+            val eventId = call.parameters["eventId"] ?: run {
+                call.respond(HttpStatusCode.NotFound)
+                return@get
+            }
+
             val userId = call.principal<JWTPrincipal>()?.getClaim("userId", String::class) ?: run {
                 call.respond(HttpStatusCode.Unauthorized)
                 return@get
             }
 
-            val markers = markerDataSource.getMarkersByUserId(userId)
+            val markers = markerDataSource.getMarkersByUserAndEvent(userId, eventId)
             call.respond(HttpStatusCode.OK, markers)
         }
     }

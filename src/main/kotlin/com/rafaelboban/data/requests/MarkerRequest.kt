@@ -5,5 +5,5 @@ data class MarkerRequest(
     val snippet: String?,
     val latitude: Double,
     val longitude: Double,
-    val id: String? = null
+    val eventId: String
 )

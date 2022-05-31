@@ -9,5 +9,6 @@ data class Marker(
     val latitude: Double,
     val longitude: Double,
     val userId: String,
+    val eventId: String,
     @BsonId val id: String = ObjectId().toString()
 )

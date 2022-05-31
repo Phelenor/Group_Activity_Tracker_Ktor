@@ -105,6 +105,11 @@ fun Route.eventWebSocket(locationDataSource: LocationDataSource, eventDataSource
                     println("SubEvent($userId) saved: $isSaved")
                 }
             }
+            is MarkerMessage -> {
+                val event = EventServer.events[payload.eventId] ?: return@standardWebSocket
+                event.lastUpdate = System.currentTimeMillis()
+                event.broadcastToAllExcept(message, userId)
+            }
         }
     }
 }
