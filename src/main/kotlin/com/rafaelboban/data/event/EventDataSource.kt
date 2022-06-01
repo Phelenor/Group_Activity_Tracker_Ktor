@@ -1,7 +1,7 @@
 package com.rafaelboban.data.event
 
+import com.rafaelboban.data.location.LatLng
 import com.rafaelboban.data.location.LocationPoint
-import com.rafaelboban.data.location.LocationPointData
 import com.rafaelboban.data.user.User
 import org.litote.kmongo.coroutine.CoroutineDatabase
 import org.litote.kmongo.eq
@@ -10,7 +10,7 @@ class EventDataSource(db: CoroutineDatabase) {
 
     private val events = db.getCollection<Event>()
     private val subEvents = db.getCollection<SubEvent>()
-    private val locations = db.getCollection<LocationPointData>()
+    private val locations = db.getCollection<LocationPoint>()
     private val users = db.getCollection<User>()
 
     suspend fun insertEvent(event: Event): Boolean {
@@ -45,10 +45,10 @@ class EventDataSource(db: CoroutineDatabase) {
         return events
     }
 
-    suspend fun getPointsForEvent(eventId: String, userId: String): List<LocationPoint> {
-        return locations.find(LocationPointData::eventId eq eventId, LocationPointData::userId eq userId)
+    suspend fun getPointsForEvent(eventId: String, userId: String): List<LatLng> {
+        return locations.find(LocationPoint::eventId eq eventId, LocationPoint::userId eq userId)
             .toList()
             .sortedBy { it.timestamp }
-            .map { LocationPoint(it.latitude, it.longitude) }
+            .map { LatLng(it.latitude, it.longitude) }
     }
 }

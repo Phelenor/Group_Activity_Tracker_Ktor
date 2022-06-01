@@ -6,7 +6,7 @@ import com.rafaelboban.EventServer
 import com.rafaelboban.data.event.*
 import com.rafaelboban.data.event.ws.*
 import com.rafaelboban.data.location.LocationDataSource
-import com.rafaelboban.data.location.LocationPointData
+import com.rafaelboban.data.location.LocationPoint
 import com.rafaelboban.plugins.TrackingSession
 import com.rafaelboban.utils.Constants.TYPE_ANNOUNCEMENT
 import com.rafaelboban.utils.Constants.TYPE_CHAT_MESSAGE
@@ -43,7 +43,7 @@ fun Route.eventWebSocket(locationDataSource: LocationDataSource, eventDataSource
                     event.broadcastToAllExcept(message, userId)
                 }
                 locationDataSource.insertLocation(
-                    LocationPointData(
+                    LocationPoint(
                         userId,
                         payload.eventId,
                         payload.timestamp,
