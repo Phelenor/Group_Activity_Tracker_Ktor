@@ -8,7 +8,7 @@ object EventServer {
 
     val events = ConcurrentHashMap<String, EventController>()
 
-    private val inactiveEvents = ConcurrentHashMap<String, Long>()
+    private val inactiveEvents = HashMap<String, Long>()
 
     init {
         CoroutineScope(Dispatchers.Default).launch {

@@ -22,7 +22,6 @@ fun Application.configureRouting(tokenConfig: TokenConfig) {
         register(userDataSource)
         login(userDataSource, tokenConfig)
         createMarker(markerDataSource)
-        getMarkers(markerDataSource)
         createEvent()
         joinEvent()
         checkEventStatus()

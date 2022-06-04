@@ -93,7 +93,7 @@ fun Route.getEvents(eventDataSource: EventDataSource) {
             val events = eventDataSource.getEventsForUser(userId).sortedByDescending { it.startTimestamp }
 
             if (events.isEmpty()) {
-                call.respond(HttpStatusCode.BadRequest)
+                call.respond(HttpStatusCode.NotFound)
                 return@get
             }
 
