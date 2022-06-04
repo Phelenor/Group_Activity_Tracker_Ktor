@@ -30,7 +30,9 @@ fun Route.eventWebSocket(locationDataSource: LocationDataSource, eventDataSource
                 val event = EventServer.events[payload.eventId] ?: return@standardWebSocket
                 event.lastUpdate = System.currentTimeMillis()
                 if (event.containsParticipant(payload.userId)) {
-                    val reconnectedParticipant = event.participants.find { it.id == payload.userId }!!.copy(socket = socket)
+                    val reconnectedParticipant = event.participants
+                        .find { it.id == payload.userId }!!
+                        .copy(socket = socket)
                     event.reconnectParticipant(reconnectedParticipant)
                 } else {
                     event.addParticipant(payload.userId, payload.username, socket)

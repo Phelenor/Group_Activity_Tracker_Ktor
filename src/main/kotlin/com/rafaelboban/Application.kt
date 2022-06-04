@@ -11,10 +11,9 @@ import io.ktor.server.sessions.*
 import io.ktor.util.*
 import org.koin.core.context.startKoin
 
-fun main(args: Array<String>): Unit =
-    EngineMain.main(args)
+fun main(args: Array<String>) = EngineMain.main(args)
 
-@Suppress("unused") // application.conf references the main function. This annotation prevents the IDE from marking it as unused.
+@Suppress("unused")
 fun Application.module() {
 
     val jwtTokenConfig = TokenConfig(
