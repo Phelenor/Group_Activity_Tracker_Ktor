@@ -17,14 +17,14 @@ object EventServer {
 
                 events.forEach { entry ->
                     val currentTime = System.currentTimeMillis()
-                    if (entry.value.participants.isEmpty()) {
+                    if (entry.value.currentParticipants.isEmpty()) {
                         inactiveEvents[entry.key] = currentTime
-                    } else if (currentTime - entry.value.lastUpdate > 10 * 60 * 1000) {
+                    } else if (currentTime - entry.value.lastUpdateTimestamp > 10 * 60 * 1000) {
                         inactiveEvents[entry.key] = currentTime
                     }
                 }
 
-                val status = events.map { "${it.value.name}(${it.value.phase.name}): ${it.value.participants.map { it.username }}" }
+                val status = events.map { "${it.value.name}(${it.value.phase.name}): ${it.value.currentParticipants.map { it.username }}" }
                 println("Active events: $status")
             }
         }

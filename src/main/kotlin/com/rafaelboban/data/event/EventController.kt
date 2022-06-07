@@ -3,6 +3,7 @@ package com.rafaelboban.data.event
 import com.google.gson.Gson
 import com.rafaelboban.EventServer
 import com.rafaelboban.data.event.ws.Announcement
+import com.rafaelboban.data.event.ws.ParticipantDataList
 import io.ktor.websocket.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -17,15 +18,15 @@ class EventController(val name: String, val ownerId: String) {
     private val eventDataSource: EventDataSource by inject(EventDataSource::class.java)
 
     val id: String = ObjectId().toString()
-    var participants: List<Participant> = emptyList()
-    private var lastUpdateTimestamp: Long = Long.MIN_VALUE
     val joinCode: String = List(6) { (('A'..'Z') + ('0'..'9')).random() }.joinToString("")
 
+    var currentParticipants: List<Participant> = emptyList()
     private val allParticipants = mutableSetOf<String>()
+    private val participantsStatusMap = hashMapOf<String, ParticipantData>()
+
+    var lastUpdateTimestamp = 0L
     var startTimestamp = 0L
     private var endTimestamp = 0L
-
-    var lastUpdate = 0L
 
     var phase = Phase.WAITING
         set(value) {
@@ -47,7 +48,7 @@ class EventController(val name: String, val ownerId: String) {
 
     suspend fun broadcast(message: String) {
         lastUpdateTimestamp = System.currentTimeMillis()
-        participants.forEach { participant ->
+        currentParticipants.forEach { participant ->
             if (participant.socket.isActive) {
                 participant.socket.send(Frame.Text(message))
             }
@@ -56,7 +57,7 @@ class EventController(val name: String, val ownerId: String) {
 
     suspend fun broadcastToAllExcept(message: String, exceptParticipantId: String) {
         lastUpdateTimestamp = System.currentTimeMillis()
-        participants.forEach { participant ->
+        currentParticipants.forEach { participant ->
             if (participant.id != exceptParticipantId && participant.socket.isActive) {
                 participant.socket.send(Frame.Text(message))
             }
@@ -65,8 +66,13 @@ class EventController(val name: String, val ownerId: String) {
 
     suspend fun addParticipant(userId: String, username: String, socket: WebSocketSession) {
         val participant = Participant(userId, username, socket)
-        participants = participants + participant
+        currentParticipants = currentParticipants + participant
         allParticipants.add(userId)
+        participantsStatusMap[userId] = ParticipantData(
+            userId,
+            username,
+            System.currentTimeMillis()
+        )
 
         val announcement = Announcement(
             id,
@@ -75,6 +81,15 @@ class EventController(val name: String, val ownerId: String) {
             Announcement.TYPE_PLAYER_JOINED
         )
         broadcast(gson.toJson(announcement))
+    }
+
+    suspend fun updateUserStatus(userId: String, toStatus: ParticipantData.Status? = null) {
+        participantsStatusMap[userId]?.apply {
+            lastUpdateTimestamp = System.currentTimeMillis()
+            toStatus?.let { status = it }
+        }
+        val participantDataList = ParticipantDataList(participantsStatusMap.values.toList())
+        broadcast(gson.toJson(participantDataList))
     }
 
     suspend fun removeParticipant(userId: String, username: String) {
@@ -89,23 +104,23 @@ class EventController(val name: String, val ownerId: String) {
 
         broadcast(gson.toJson(announcement))
 
-        if (participants.isEmpty()) {
+        if (currentParticipants.isEmpty()) {
             EventServer.events.remove(id)
         }
     }
 
     fun reconnectParticipant(participant: Participant) {
         removeParticipantFromList(participant.id)
-        participants = participants + participant
+        currentParticipants = currentParticipants + participant
     }
 
     private fun removeParticipantFromList(userId: String) {
-        val participantToRemove = participants.find { it.id == userId } ?: return
-        participants = participants - participantToRemove
+        val participantToRemove = currentParticipants.find { it.id == userId } ?: return
+        currentParticipants = currentParticipants - participantToRemove
     }
 
     fun containsParticipant(participantId: String): Boolean {
-        return participants.find { it.id == participantId } != null
+        return currentParticipants.find { it.id == participantId } != null
     }
 
     private fun finishActivity() {
@@ -123,7 +138,7 @@ class EventController(val name: String, val ownerId: String) {
     }
 
     suspend fun killEvent() {
-        participants.forEach { participant ->
+        currentParticipants.forEach { participant ->
             participant.socket.close()
         }
     }

@@ -28,19 +28,21 @@ fun Route.eventWebSocket(locationDataSource: LocationDataSource, eventDataSource
         when (payload) {
             is JoinEventHandshake -> {
                 val event = EventServer.events[payload.eventId] ?: return@standardWebSocket
-                event.lastUpdate = System.currentTimeMillis()
+                event.lastUpdateTimestamp = System.currentTimeMillis()
                 if (event.containsParticipant(payload.userId)) {
-                    val reconnectedParticipant = event.participants
+                    val reconnectedParticipant = event.currentParticipants
                         .find { it.id == payload.userId }!!
                         .copy(socket = socket)
                     event.reconnectParticipant(reconnectedParticipant)
                 } else {
                     event.addParticipant(payload.userId, payload.username, socket)
                 }
+                event.updateUserStatus(payload.userId)
             }
             is LocationData -> {
                 val event = EventServer.events[payload.eventId] ?: return@standardWebSocket
-                event.lastUpdate = System.currentTimeMillis()
+                event.lastUpdateTimestamp = System.currentTimeMillis()
+                event.updateUserStatus(payload.fromUserId, ParticipantData.Status.ACTIVE)
                 if (event.phase == EventController.Phase.IN_PROGRESS) {
                     event.broadcastToAllExcept(message, userId)
                 }
@@ -56,17 +58,18 @@ fun Route.eventWebSocket(locationDataSource: LocationDataSource, eventDataSource
             }
             is ChatMessage -> {
                 val event = EventServer.events[payload.eventId] ?: return@standardWebSocket
-                event.lastUpdate = System.currentTimeMillis()
+                event.updateUserStatus(payload.fromId)
+                event.lastUpdateTimestamp = System.currentTimeMillis()
                 event.broadcast(message)
             }
             is Announcement -> {
                 val event = EventServer.events[payload.eventId] ?: return@standardWebSocket
-                event.lastUpdate = System.currentTimeMillis()
+                event.lastUpdateTimestamp = System.currentTimeMillis()
                 event.broadcast(message)
             }
             is PhaseChange -> {
                 val event = EventServer.events[payload.eventId] ?: return@standardWebSocket
-                event.lastUpdate = System.currentTimeMillis()
+                event.lastUpdateTimestamp = System.currentTimeMillis()
                 if (userId == event.ownerId) {
                     event.phase = payload.phase
                     event.broadcastToAllExcept(message, userId)
@@ -75,13 +78,15 @@ fun Route.eventWebSocket(locationDataSource: LocationDataSource, eventDataSource
             is DisconnectRequest -> {
                 val event = EventServer.events[payload.eventId] ?: return@standardWebSocket
                 println("$userId disconnected from ${event.name}.")
-                event.lastUpdate = System.currentTimeMillis()
+                event.lastUpdateTimestamp = System.currentTimeMillis()
+                event.updateUserStatus(userId, ParticipantData.Status.LEFT)
                 event.removeParticipant(userId, payload.username)
             }
             is FinishEvent -> {
                 val event = EventServer.events[payload.eventId] ?: return@standardWebSocket
                 println("$userId finished ${event.name}.")
-                event.lastUpdate = System.currentTimeMillis()
+                event.lastUpdateTimestamp = System.currentTimeMillis()
+                event.updateUserStatus(userId, ParticipantData.Status.FINISHED)
                 val announcement = Announcement(
                     event.id,
                     "${payload.username} has finished his activity.",
@@ -110,7 +115,7 @@ fun Route.eventWebSocket(locationDataSource: LocationDataSource, eventDataSource
             }
             is MarkerMessage -> {
                 val event = EventServer.events[payload.eventId] ?: return@standardWebSocket
-                event.lastUpdate = System.currentTimeMillis()
+                event.lastUpdateTimestamp = System.currentTimeMillis()
                 event.broadcastToAllExcept(message, userId)
             }
         }
