@@ -37,3 +37,23 @@ fun Route.createMarker(markerDataSource: MarkerDataSource) {
         }
     }
 }
+
+fun Route.getMarkers(markerDataSource: MarkerDataSource) {
+
+    authenticate {
+        get("/api/markers/{eventId}") {
+            val userId = call.principal<JWTPrincipal>()?.getClaim("userId", String::class) ?: run {
+                call.respond(HttpStatusCode.Unauthorized)
+                return@get
+            }
+
+            val eventId = call.parameters["eventId"] ?: run {
+                call.respond(HttpStatusCode.NotFound)
+                return@get
+            }
+
+            val markers = markerDataSource.getMarkersByUserAndEvent(userId, eventId)
+            call.respond(HttpStatusCode.OK, markers)
+        }
+    }
+}

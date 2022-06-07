@@ -27,6 +27,7 @@ fun Application.configureRouting(tokenConfig: TokenConfig) {
         checkEventStatus()
         getEvents(eventDataSource)
         getPoints(eventDataSource)
+        getMarkers(markerDataSource)
         eventWebSocket(locationDataSource, eventDataSource, gson)
         authenticate()
     }
