@@ -33,7 +33,7 @@ fun Route.createMarker(markerDataSource: MarkerDataSource) {
                 return@post
             }
 
-            call.respond(HttpStatusCode.OK, marker)
+            call.respond(HttpStatusCode.OK)
         }
     }
 }
